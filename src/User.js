@@ -1,33 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer, useEffect } from 'react';
 import axios from 'axios';
-import styled from 'styled-components';
+import { asyncReducer } from './asyncReducer';
 
 const User = () => {
-  const [users, setUsers] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [state, dispatch] = useReducer(asyncReducer, {
+    loading: false,
+    data: null,
+    error: null,
+  });
+
+  const fetchUsers = async () => {
+    dispatch({ type: 'LOADING' });
+    try {
+      const response = await axios.get(
+        'https://jsonplaceholder.typicode.com/users',
+      );
+      dispatch({ type: 'SUCCESS', data: response.data });
+    } catch (e) {
+      dispatch({ type: 'ERROR', error: e });
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      setUsers(null);
-      setError(null);
-      setLoading(true);
-      const response = await axios.get(
-        'https://jsonplaceholder.typicode.com/users',
-      );
-      setUsers(response.data);
-      console.log(users);
-    } catch (e) {
-      setError(e);
-      console.log(e);
-    }
-    setLoading(false);
-  };
-
+  const { loading, data: users, error } = state;
   if (loading) return <div>로딩중</div>;
   if (error) return <div>에어가 발생했습니다</div>;
   if (!users) return null;
